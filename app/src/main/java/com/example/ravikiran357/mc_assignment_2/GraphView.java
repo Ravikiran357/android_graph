@@ -26,7 +26,8 @@ public class GraphView extends View {
     private String title;
     private boolean type;
 
-    public GraphView(Context context, float[] values, float[] valuesy, float[] valuesz, String title, String[] horlabels, String[] verlabels, boolean type) {
+    public GraphView(Context context, float[] values, float[] valuesy, float[] valuesz, String title,
+                     String[] horlabels, String[] verlabels, boolean type) {
         super(context);
         if (values == null)
             values = new float[0];
@@ -78,7 +79,7 @@ public class GraphView extends View {
         float graphheight = height - (2 * border);
         float graphwidth = width - (2 * border);
 
-
+        paint.setTextSize(20);
         paint.setTextAlign(Align.LEFT);
         int vers = verlabels.length - 1;
         for (int i = 0; i < verlabels.length; i++) {
@@ -141,7 +142,7 @@ public class GraphView extends View {
                     float h = graphheight * rat;
                     if (i > 0)
                         paint.setColor(Color.GREEN);
-                    paint.setStrokeWidth(2.0f);
+                    paint.setStrokeWidth(3.0f);
                     canvas.drawLine(((i - 1) * colwidth) + (horstart + 1) + halfcol, (border - lasth) + graphheight, (i * colwidth) + (horstart + 1) + halfcol, (border - h) + graphheight, paint);
                     lasth = h;
 
@@ -151,7 +152,7 @@ public class GraphView extends View {
                     float hy = graphheight * raty;
                     if (i > 0)
                         paint.setColor(Color.RED);
-                    paint.setStrokeWidth(2.0f);
+                    paint.setStrokeWidth(3.0f);
                     canvas.drawLine(((i - 1) * colwidth) + (horstart + 1) + halfcol, (border - lasthy) + graphheight, (i * colwidth) + (horstart + 1) + halfcol, (border - hy) + graphheight, paint);
                     lasthy = hy;
 
@@ -161,7 +162,7 @@ public class GraphView extends View {
                     float hz = graphheight * ratz;
                     if (i > 0)
                         paint.setColor(Color.BLUE);
-                    paint.setStrokeWidth(2.0f);
+                    paint.setStrokeWidth(3.0f);
                     canvas.drawLine(((i - 1) * colwidth) + (horstart + 1) + halfcol, (border - lasthz) + graphheight, (i * colwidth) + (horstart + 1) + halfcol, (border - hz) + graphheight, paint);
                     lasthz = hz;
                 }
@@ -171,9 +172,9 @@ public class GraphView extends View {
 
     private float getMax() {
         float largest = Integer.MIN_VALUE;
-        for (int i = 0; i < valuesx.length; i++)
-            if (valuesx[i] > largest)
-                largest = valuesx[i];
+        for (float aValuesx : valuesx)
+            if (aValuesx > largest)
+                largest = aValuesx;
 
         //largest = 3000;
         return largest;
@@ -181,9 +182,9 @@ public class GraphView extends View {
 
     private float getMin() {
         float smallest = Integer.MAX_VALUE;
-        for (int i = 0; i < valuesx.length; i++)
-            if (valuesx[i] < smallest)
-                smallest = valuesx[i];
+        for (float aValuesx : valuesx)
+            if (aValuesx < smallest)
+                smallest = aValuesx;
 
         //smallest = 0;
         return smallest;

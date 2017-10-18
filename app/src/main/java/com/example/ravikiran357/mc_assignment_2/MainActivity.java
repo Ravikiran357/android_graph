@@ -54,7 +54,7 @@ public class MainActivity extends AppCompatActivity{
     int valueArraySize = 10;
 
     Thread movingGraph = null;
-    int threadSleepTime = 1000;
+    int threadSleepTime = 500;
     Boolean flag = null;
     Boolean threadStartedFlag=false;
     Boolean downloadButtonPressed=false;
@@ -79,6 +79,7 @@ public class MainActivity extends AppCompatActivity{
     public static final String FILE_PATH = Environment.getExternalStorageDirectory() +
             File.separator + "Android/Data/CSE535_ASSIGNMENT2";
     public static final String DOWNLOAD_PATH = FILE_PATH + "_Extra";// + File.separator + DATABASE_NAME;
+    public static final String DOWNLOADED_DB = DOWNLOAD_PATH + DATABASE_NAME;// + File.separator + DATABASE_NAME;
     public static final String DATABASE_LOCATION = FILE_PATH + File.separator + DATABASE_NAME;
     public static final String SERVER_LOCATION = "http://10.218.110.136/CSE535Fall17Folder/";
 
@@ -105,6 +106,49 @@ public class MainActivity extends AppCompatActivity{
         } else {
             setupModules();
         }
+    }
+
+    @Override
+    protected void onResume() {
+        // TODO Auto-generated method stub
+        try {
+            if (!buttonRun.isEnabled() && buttonStop.isEnabled() &&
+                    !buttonUpload.isEnabled() && !buttonDownload.isEnabled()) {
+                IntentFilter intentFilter = new IntentFilter();
+                intentFilter.addAction(AccelerometerService.INTENT_ACCELEROMETER_DATA);
+                registerReceiver(accelerometerReceiver, intentFilter);
+            }
+        }catch (Exception e)    {
+            Log.d("resume-receiver",e.getMessage());
+        }
+        super.onResume();
+    }
+
+    @Override
+    protected void onStart() {
+        // TODO Auto-generated method stub
+        try {
+            if (!buttonRun.isEnabled() && buttonStop.isEnabled() &&
+                    !buttonUpload.isEnabled() && !buttonDownload.isEnabled()) {
+                IntentFilter intentFilter = new IntentFilter();
+                intentFilter.addAction(AccelerometerService.INTENT_ACCELEROMETER_DATA);
+                registerReceiver(accelerometerReceiver, intentFilter);
+            }
+        }catch (Exception e)    {
+            Log.d("start-receiver",e.getMessage());
+        }
+        super.onStart();
+    }
+
+    @Override
+    protected void onStop() {
+        // TODO Auto-generated method stub
+        try {
+            unregisterReceiver(accelerometerReceiver);
+        }catch (Exception e)    {
+            Log.d("stop-receiver",e.getMessage());
+        }
+        super.onStop();
     }
 
     @TargetApi(Build.VERSION_CODES.M)
@@ -148,7 +192,6 @@ public class MainActivity extends AppCompatActivity{
             Toast.makeText(MainActivity.this, e.getMessage(), Toast.LENGTH_LONG).show();
             Log.d("exp-setupmodules",e.getMessage());
         }
-
         setButtonsActions();
         setGraphUI();
     }
@@ -184,7 +227,6 @@ public class MainActivity extends AppCompatActivity{
 
                 if(flag == null || !flag){
                     flag = true;
-
                     //disable relevant buttons
                     disableOrEnableButtons(false, true, false, false);
 
@@ -192,7 +234,6 @@ public class MainActivity extends AppCompatActivity{
                             widgetPatientAge.getText().toString(),
                             widgetPatientID.getText().toString(), isMale);
                     TABLE = patientInfo.table_name;
-                    TABLE = TABLE.replace(" ", "_");
                     Toast.makeText(MainActivity.this, "Table Name: " + TABLE, Toast.LENGTH_SHORT).show();
 
                     db.beginTransaction();
@@ -231,13 +272,15 @@ public class MainActivity extends AppCompatActivity{
                     valuesz[i] = 0;
                 }
                 g.invalidate();
-                g.setValues(valuesx, valuesy, valuesz);
+                g.setValues(valuesx, valuesy, valuesz); // to continue when run is pressed next timess
                 //disable relevant buttons
                 disableOrEnableButtons(true, false, true, true);
 
                 try {
                     unregisterReceiver(accelerometerReceiver);
-                }catch (Exception e)    {}
+                }catch (Exception e)    {
+                    Log.d("stop-button",e.getMessage());
+                }
             }
         });
 
@@ -269,7 +312,7 @@ public class MainActivity extends AppCompatActivity{
     private void setGraphUI() {
         String[] hlabels= new String[valueArraySize];
         for (int i = 0; i < valueArraySize; i++) {
-            int temp = (-4)*i + 18;         //to get in the range of 20 to -18
+            int temp = (-4)*i + 20;         //to get in the range of 20 to -18
             hlabels[i]=String.valueOf(temp);
         }
 
@@ -310,7 +353,7 @@ public class MainActivity extends AppCompatActivity{
     private void getDataFromDatabase() {
         String query = "SELECT  * FROM " + TABLE + " ORDER BY created_at desc LIMIT 10;";
         Cursor cursor = null;
-        int i = valueArraySize - 1;
+//        int i = valueArraySize - 1;
         db.beginTransaction();
         try {
             cursor = db.rawQuery(query, null);
@@ -323,16 +366,17 @@ public class MainActivity extends AppCompatActivity{
 
         try {
             if (cursor.moveToFirst()) {
+                int i = 0;
                 do {
                     valuesx[i] = Float.parseFloat(cursor.getString(1));
                     valuesy[i] = Float.parseFloat(cursor.getString(2));
                     valuesz[i] = Float.parseFloat(cursor.getString(3));
-                    g.invalidate();
+//                    g.invalidate();
                     g.setValues(valuesx, valuesy, valuesz);
-                    i--;
-                } while (cursor.moveToNext() && i >= 0);
+                    i++;
+                } while (cursor.moveToNext() && i < valueArraySize);
             }
-            Toast.makeText(this.getApplicationContext(),"Graph plotted", Toast.LENGTH_SHORT).show();
+//            Toast.makeText(this.getApplicationContext(),"Graph plotted", Toast.LENGTH_SHORT).show();
         }
         catch (Exception e)    {
             if(downloadButtonPressed) {
@@ -390,6 +434,7 @@ public class MainActivity extends AppCompatActivity{
 
     private void uploadFileToServer(final String sourceFileUri, String serverLocation, String fileName) {
         final UploadTask uploadTask = new UploadTask(MainActivity.this);
+        Toast.makeText(this,"Uploading "+fileName, Toast.LENGTH_SHORT).show();
         uploadTask.execute(sourceFileUri, serverLocation, fileName);
     }
 
@@ -486,7 +531,6 @@ public class MainActivity extends AppCompatActivity{
                         widgetPatientAge.getText().toString(), widgetPatientID.getText().toString(),
                         isMale);
                 TABLE = patientInfo.table_name;
-                TABLE = TABLE.replace(" ", "_");
                 downloadButtonPressed = true;
                 getDataFromDatabase();
             }
@@ -531,7 +575,6 @@ public class MainActivity extends AppCompatActivity{
                     }
                     };
 
-
                     try {
                         SSLContext sc = SSLContext.getInstance("SSL");
                         sc.init(null, trustAllCerts, new SecureRandom());
@@ -554,6 +597,7 @@ public class MainActivity extends AppCompatActivity{
 
                     dos = new DataOutputStream(conn.getOutputStream());
                     Log.d("Upload", "Uploading...");
+
                     dos.writeBytes(twoHyphens + boundary + lineEnd);
                     dos.writeBytes("Content-Disposition: form-data; name=\"uploaded_file\";" +
                             "filename=\"" + params[2] + "\"" + lineEnd);
@@ -628,5 +672,25 @@ public class MainActivity extends AppCompatActivity{
         buttonStop.setEnabled(stop);
         buttonUpload.setEnabled(upload);
         buttonDownload.setEnabled(download);
+    }
+
+    private class PatientInfo {
+        String table_name;
+
+        PatientInfo(String P_Name, String P_ID, String P_Age, boolean P_Male){
+            StringBuilder sb = new StringBuilder();
+            sb.append(P_Name);
+            sb.append("_");
+            sb.append(P_ID);
+            sb.append("_");
+            sb.append(P_Age);
+            sb.append("_");
+            if(P_Male)
+                sb.append("M");
+            else
+                sb.append("F");
+            table_name = sb.toString();
+            table_name = table_name.replace(" ", "_");
+        }
     }
 }

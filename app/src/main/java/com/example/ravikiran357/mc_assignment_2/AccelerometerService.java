@@ -65,9 +65,6 @@ public class AccelerometerService extends Service implements SensorEventListener
         intent.putExtra("Y", y_value);
         intent.putExtra("Z", z_value);
         sendBroadcast(intent);
-
-//        Log.d("sensorChanged", "X - "+ Float.toString(x_value) + " | Y - "+ Float.toString(y_value)
-//                + " | Z - "+ Float.toString(z_value));
     }
 
     @Override
